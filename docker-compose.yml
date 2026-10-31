@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  chainsight:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chainsight-ai
+    ports:
+      - "8100:8100"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CHAINSIGHT_DATA_DIR=/app/data
+      - CHAINSIGHT_CORS_ORIGINS=http://localhost:5173,http://localhost:5175,http://localhost:8100,http://127.0.0.1:8100
+    restart: unless-stopped

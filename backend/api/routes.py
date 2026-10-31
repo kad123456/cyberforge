@@ -283,6 +283,62 @@ def reachable(incident_id: str):
     return {"items": reachability(build_graph(item, events, detections))}
 
 
+@router.get("/incidents/{incident_id}/path")
+def incident_path(incident_id: str):
+    item = incident_or_404(incident_id)
+    events, detections = incident_data(item)
+    graph_data = build_graph(item, events, detections)
+    reachable_targets = reachability(graph_data)
+
+    seen_tactics = []
+    path_hops = []
+    for idx, e in enumerate(events, 1):
+        if e.tactic and e.tactic not in seen_tactics:
+            seen_tactics.append(e.tactic)
+        
+        hop_desc = (
+            f"{e.source_ip} -> {e.destination_ip}"
+            if (e.source_ip and e.destination_ip and e.source_ip != e.destination_ip)
+            else (e.host or "Unknown host")
+        )
+        tech_label = f"{e.technique_id} ({e.technique_name})" if e.technique_id else None
+        path_hops.append({
+            "step": idx,
+            "timestamp": e.timestamp.isoformat() if hasattr(e.timestamp, "isoformat") else str(e.timestamp),
+            "host": e.host,
+            "user": e.user,
+            "source_ip": e.source_ip,
+            "destination_ip": e.destination_ip,
+            "process": e.process_name,
+            "action": e.action,
+            "technique": tech_label,
+            "kill_chain_stage": e.tactic,
+            "severity": e.severity,
+            "hop": hop_desc,
+        })
+
+    return {
+        "incident_id": item.incident_id,
+        "attack_type": item.attack_type,
+        "risk_score": item.risk_score,
+        "risk_label": item.risk_label,
+        "confidence": item.confidence,
+        "first_seen": item.first_observed.isoformat() if hasattr(item.first_observed, "isoformat") else str(item.first_observed),
+        "last_seen": item.last_observed.isoformat() if hasattr(item.last_observed, "isoformat") else str(item.last_observed),
+        "hosts_involved": item.hosts,
+        "users_involved": item.users,
+        "kill_chain_stages": seen_tactics,
+        "behavior_summary": item.behavior_summary,
+        "attack_path": path_hops,
+        "look_ahead": {
+            "description": "Defensive reachability leads: systems/addresses reachable from observed footholds",
+            "next_reachable_targets": reachable_targets,
+            "target_count": len(reachable_targets),
+        },
+        "graph": graph_data,
+    }
+
+
 @router.get("/mitre/techniques")
 def techniques():
     return {"items": store.mitre_summary()}

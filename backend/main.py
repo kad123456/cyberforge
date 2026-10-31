@@ -43,3 +43,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(router)
+
+# Direct root-level route aliases matching PRD specifications (e.g., GET /incidents/12/path)
+from backend.api import routes as api_routes
+
+@app.get("/incidents/{incident_id}/path", include_in_schema=False)
+def direct_incident_path(incident_id: str):
+    return api_routes.incident_path(incident_id)
+
+@app.get("/incidents/{incident_id}", include_in_schema=False)
+def direct_incident_detail(incident_id: str):
+    return api_routes.incident(incident_id)
+
+@app.get("/incidents", include_in_schema=False)
+def direct_incidents_list(severity: str | None = None):
+    return api_routes.incidents(severity=severity)
+
+# Mount pre-built frontend if available for unified single-port operation
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+
+frontend_dist = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+if frontend_dist.is_dir():
+    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
+
+

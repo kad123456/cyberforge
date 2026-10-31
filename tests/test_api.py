@@ -286,3 +286,56 @@ def test_streaming_upload_detects_complete_batches_before_upload_finishes(tmp_pa
     assert evidence(streamed_storage) == evidence(reference_storage)
     assert detections(streamed_storage) == detections(reference_storage)
     assert memberships(streamed_storage) == memberships(reference_storage)
+
+
+def test_incident_path_endpoints(tmp_path, monkeypatch):
+    import backend.api.routes as routes
+
+    name = f"codex-path-{uuid4().hex}.jsonl"
+    source = DATA_DIR / name
+    timestamp = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    records = [
+        {
+            "@timestamp": (timestamp + timedelta(minutes=minute)).isoformat(),
+            "event": {
+                "id": f"auth-path-{minute}",
+                "category": ["authentication"],
+                "outcome": "success" if minute == 5 else "failure",
+            },
+            "host": {"name": "AUTH-01"},
+            "user": {"name": "admin"},
+        }
+        for minute in range(6)
+    ]
+    source.write_text("\n".join(json.dumps(record) for record in records), encoding="utf-8")
+    storage = Storage(tmp_path / "path-endpoint.duckdb")
+    service = IngestionService(storage)
+    monkeypatch.setattr(routes, "store", storage)
+    monkeypatch.setattr(routes, "ingestion", service)
+
+    try:
+        with TestClient(app) as client:
+            resp = client.post("/api/ingest/process", params={"filename": name})
+            assert resp.status_code == 200
+            incidents = storage.incidents()
+            assert len(incidents) == 1
+            inc_id = incidents[0].incident_id
+
+            # Test API prefixed path
+            res_api = client.get(f"/api/incidents/{inc_id}/path")
+            assert res_api.status_code == 200
+            data = res_api.json()
+            assert data["incident_id"] == inc_id
+            assert "attack_path" in data
+            assert len(data["attack_path"]) > 0
+            assert "look_ahead" in data
+            assert "next_reachable_targets" in data["look_ahead"]
+
+            # Test PRD exact root path
+            res_direct = client.get(f"/incidents/{inc_id}/path")
+            assert res_direct.status_code == 200
+            assert res_direct.json()["incident_id"] == inc_id
+    finally:
+        source.unlink(missing_ok=True)
+
+
