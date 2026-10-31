@@ -1,0 +1,2 @@
+export type Incident={incident_id:string;first_observed:string;last_observed:string;hosts:string[];users:string[];event_count:number;detection_count:number;techniques:string[];severity:string;confidence:number;risk_score:number;risk_label:string;correlation_reasons:string[];risk_reasons:string[]};
+export type Event={event_id:string;timestamp:string;category:string;action:string;severity:string;host?:string;user?:string;process_name?:string;technique_id?:string;technique_name?:string;tactic?:string;command_line?:string;domain?:string};

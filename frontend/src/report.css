@@ -1,0 +1,12 @@
+.report-view{max-width:none;margin:0;padding:18px}
+.report-toolbar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.report-title{display:flex;align-items:center;gap:12px}
+.report-title svg{color:#28c7a0;flex:none}
+.report-title h2{margin:0 0 4px}
+.report-title p,.report-help{margin:0;color:#8facba;font-size:13px;line-height:1.55}
+.report-actions{display:flex;gap:9px;flex-wrap:wrap}
+.report-actions a{background:#152b40;border:1px solid #2a5267;border-radius:7px;padding:10px 14px;color:#cdf5e9;text-decoration:none;font-size:13px}
+.report-actions a:hover{background:#1b3b53}
+.report-help{margin:14px 0}
+.report-preview{display:block;width:100%;height:calc(100vh - 275px);min-height:620px;border:1px solid #294657;border-radius:8px;background:#fff}
+@media(max-width:900px){.report-view{padding:14px}.report-preview{height:75vh;min-height:520px}}

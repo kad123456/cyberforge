@@ -1,0 +1,33 @@
+/* Shared sizing and spacing fixes; colors and component design stay in style.css. */
+.app{min-width:0;width:100%}
+.app>aside{flex:0 0 244px}
+.app>main{flex:1 1 0;width:calc(100% - 244px);min-width:0;margin-inline:auto;overflow-x:hidden}
+.app>main>header{min-width:0;gap:16px;flex-wrap:wrap}
+.app>main>header>div{min-width:0}
+.app>main>header h1{overflow-wrap:anywhere}
+.cards{grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));align-items:stretch}
+.card,.panel,.grid>*,.split>*{min-width:0}
+.grid,.split{grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr);align-items:stretch}
+.chart{min-width:0}
+.table-wrap{width:100%;max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain}
+.table-wrap table{min-width:620px}
+.upload{width:100%;max-width:960px;margin:clamp(20px,4vw,42px) auto}
+.upload>svg{display:block;margin:0 auto 14px}
+.path-load{width:100%;max-width:none;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:stretch}
+.path-load input{min-width:0;width:100%}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));align-items:start;justify-content:stretch;gap:14px 18px;text-align:left}
+.stats span{display:block;min-width:0;line-height:1.35;overflow-wrap:anywhere}
+.stats b{font-size:clamp(15px,1.35vw,18px);line-height:1.35;overflow-wrap:anywhere}
+.timeline article{grid-template-columns:minmax(145px,180px) minmax(74px,90px) minmax(0,1fr);align-items:start}
+.timeline article>*{min-width:0;overflow-wrap:anywhere}
+.graph,.report-view{min-width:0}
+.report-preview{min-width:0}
+.live-notice{display:grid;gap:5px}
+.live-notice strong{color:#d7fff3}
+.live-notice span{color:#c6e4e8;line-height:1.5}
+.live-notice small{color:#9ab7c4;line-height:1.45}
+.chart-note{display:grid;min-height:205px;place-content:center;text-align:center;color:#9ab7c4;line-height:1.6}
+@media(max-width:1050px){.grid,.split{grid-template-columns:minmax(0,1fr)}.chart{height:300px}}
+@media(max-width:900px){.app>aside{flex-basis:64px}.app>main{width:calc(100% - 64px);padding:20px}}
+@media(max-width:680px){.app>main{padding:15px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.path-load{grid-template-columns:minmax(0,1fr)}.timeline article{grid-template-columns:minmax(0,1fr);gap:5px}.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}}
+@media(max-width:420px){.cards{grid-template-columns:minmax(0,1fr)}.app>main>header{align-items:flex-start}.app>main>header .refresh{width:100%}.stats{grid-template-columns:minmax(0,1fr)}}
