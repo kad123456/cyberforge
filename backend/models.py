@@ -93,3 +93,5 @@ class Incident(BaseModel):
     risk_score: int = 0
     risk_label: str = "Low"
     risk_reasons: list[str] = []
+    attack_type: str = "Suspicious Security Anomaly"
+    behavior_summary: str = ""

@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from datetime import timedelta
 from uuid import uuid4
 from backend.models import Incident
-from backend.risk.scoring import score_values
+from backend.risk.scoring import classify_attack_behavior, score_values
 
 RANK={"informational":0,"low":1,"medium":2,"high":3,"critical":4}
 
@@ -38,7 +38,22 @@ class IncidentState:
         if RANK.get(other.highest_severity,0)>RANK.get(self.highest_severity,0): self.highest_severity=other.highest_severity
     def model(self):
         confidence=round(self.confidence_total/max(1,self.detection_count),2)
-        result=Incident(incident_id=self.incident_id,first_observed=self.first_observed,last_observed=self.last_observed,hosts=sorted(self.hosts),users=sorted(self.users),event_count=self.event_count,detection_count=self.detection_count,techniques=sorted(self.techniques),severity=self.highest_severity,confidence=confidence,correlation_reasons=sorted(self.reasons) or ["Single evidence-backed detection; not linked to unrelated activity"])
+        attack_type, behavior_summary = classify_attack_behavior(self.techniques, self.tactics, self.reasons)
+        result=Incident(
+            incident_id=self.incident_id,
+            first_observed=self.first_observed,
+            last_observed=self.last_observed,
+            hosts=sorted(self.hosts),
+            users=sorted(self.users),
+            event_count=self.event_count,
+            detection_count=self.detection_count,
+            techniques=sorted(self.techniques),
+            severity=self.highest_severity,
+            confidence=confidence,
+            correlation_reasons=sorted(self.reasons) or ["Single evidence-backed detection; not linked to unrelated activity"],
+            attack_type=attack_type,
+            behavior_summary=behavior_summary,
+        )
         result.risk_score,result.risk_label,result.risk_reasons=score_values(self.highest_severity,self.detection_count,len(self.tactics),confidence)
         return result
 

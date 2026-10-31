@@ -807,20 +807,26 @@ class Storage:
         with self.writer() as writer:
             return writer.save_incidents(incidents)
 
-    def incidents(self):
+    @staticmethod
+    def _hydrate_incident(data: dict):
         from backend.models import Incident
+        from backend.risk.scoring import classify_attack_behavior
+        inc = Incident(**data)
+        if (not inc.attack_type or inc.attack_type == "Suspicious Security Anomaly") and inc.techniques:
+            inc.attack_type, inc.behavior_summary = classify_attack_behavior(inc.techniques, reasons=inc.correlation_reasons)
+        return inc
+
+    def incidents(self):
         with self.connect() as db:
             rows = db.execute("SELECT payload FROM incidents").fetchall()
-        return [Incident(**(orjson.loads(r[0]) if isinstance(r[0], str) else r[0])) for r in rows]
+        return [self._hydrate_incident(orjson.loads(r[0]) if isinstance(r[0], str) else r[0]) for r in rows]
 
     def incident(self, incident_id: str):
-        from backend.models import Incident
         with self.connect() as db:
             row = db.execute("SELECT payload FROM incidents WHERE incident_id=?", [incident_id]).fetchone()
-        return Incident(**self._decode_json(row[0])) if row else None
+        return self._hydrate_incident(self._decode_json(row[0])) if row else None
 
     def incident_overview(self, recent_limit: int = 8):
-        from backend.models import Incident
         with self.connect() as db:
             total, critical = db.execute(
                 "SELECT COUNT(*),COUNT(*) FILTER (WHERE json_extract_string(payload,'$.risk_label')='Critical') FROM incidents"
@@ -829,7 +835,7 @@ class Storage:
                 "SELECT payload FROM incidents ORDER BY TRY_CAST(json_extract_string(payload,'$.last_observed') AS TIMESTAMP) DESC LIMIT ?",
                 [recent_limit],
             ).fetchall()
-        recent = [Incident(**self._decode_json(row[0])) for row in rows]
+        recent = [self._hydrate_incident(self._decode_json(row[0])) for row in rows]
         return {"total": total, "critical": critical, "recent": recent}
 
     def events_for_incident(self, incident_id, limit=1_000):
